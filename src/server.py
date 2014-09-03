@@ -4,6 +4,15 @@ import json
 import unicodedata
 import datetime
 
+from .profanity import Filter
+
+ProfanityFilters = {}
+
+def getFilter(client_id):
+  # creates the filter if it doesn't exist
+  if client_id not in ProfanityFilters
+    ProfanityFilters[client_id] = Filter(client_id)
+  return ProfanityFilters[client_id]
 
 class WSHandler(websocket.WebSocketHandler):
     def open(self):
@@ -13,16 +22,16 @@ class WSHandler(websocket.WebSocketHandler):
     def on_message(self, message):
       message = json.loads(message)
       client_id = message['client_id']
-      doc = message['doc']
-      exp = re_dict[client_id]
+      text = message['text']
+
+      filter = getFilter(client_id)
 
       response = { 
         'client_id': client_id,
-        # 'profane_code': codify_doc(doc, re_obj)
-        'profane_code': codify_doc_pattern(doc, exp)
+        'profane_code': filter.code_regex(text)
       }
 
-        self.write_message(json.dumps(response))
+      self.write_message(json.dumps(response))
  
     def on_close(self):
       print 'connection closed'
@@ -35,65 +44,50 @@ class MainHandler(tornado.web.RequestHandler):
 
 class CodifyProfane(tornado.web.RequestHandler):
   def post(self):
-    client_id = self.get_argument('client_id', '')
-    doc = self.get_argument('doc', '')
+    # require the vars. raise 400 if not present
+    client_id = self.get_argument('client_id')
+    text = self.get_argument('text')
 
-    exp = re_dict[client_id]
+    filter = getFilter(client_id)
 
-    if client_id in profane_dict:
-      response = { 'client_id': client_id,
-            #'profane_code': codify_doc(doc, exp)
-            'profane_code': codify_doc_pattern(doc, exp)
-            }
-    else:
-      response = "client not found"
+    response = {
+      'client_id': client_id,
+      'profane_code': filter.code_regex(text)
+    }
+
     self.write(response)
   get = post
 
 
 class ProfaneList(tornado.web.RequestHandler):
   def get(self):
-    client_id = self.get_argument('client_id', '')
-    if client_id in profane_dict:
-      response = { 'client_id': client_id,
-            'swear_dict': profane_dict[client_id]
-            }
-    else:
-      response = { 'client_id': client_id,
-            'swear_dict': 'Client id not present'
-            }
+    # require client_id or raise 400
+    client_id = self.get_argument('client_id')
+    filter = getFilter(client_id)
+    response = { 
+      'client_id': client_id,
+      'black_list': filter.black_list
+    }
     self.write(response)
 
 
 class ProfaneListInit(tornado.web.RequestHandler):
-  global profane_dict
-  global re_dict
   def post(self):
-    client_id = self.get_argument('client_id', '')
-    profane_list = json.loads(self.get_argument('profane_list', ''))
+    # require client_id and black_list or 400
+    client_id = self.get_argument('client_id')
+    black_list = self.get_argument('black_list')
 
-    if client_id in profane_dict:
-      self.write("Client ID exists, use update")
-    else:
-      profane_dict[client_id] ={
-        'profane_list': profane_list
-      }
+    # load the black_list from json
+    black_list = json.loads(black_list)
 
-      word_list = []
-      for key,value in profane_list.iteritems():
-        word_list.append(key)
-
-      exp = re_compile(word_list)
-
-      # exp = pattern_compile(word_list)
-      re_dict[client_id] = exp
-
+    filter = getFilter(client_id)
+    filter.set_blacklist(black_list)
 
 class ProfaneListUpdate(tornado.web.RequestHandler):
   def post(self):
-    global profane_dict
-    global re_dict
-    client_id = self.get_argument('client_id', '')
+    # require client_id or 400
+    client_id = self.get_argument('client_id')
+
     u_type = self.get_argument('u_type', '')
     term = self.get_argument('term', '')
 
