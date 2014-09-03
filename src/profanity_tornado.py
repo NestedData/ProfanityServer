@@ -2,7 +2,7 @@ import tornado
 from tornado import autoreload, ioloop, web, options, escape, websocket
 import re
 import json
-from pattern.search import search, STRICT
+from pattern.search import search, STRICT, Pattern, Constraint, taxonomy
 from pattern.en import parsetree
 import unicodedata
 import datetime
@@ -12,12 +12,12 @@ re_dict = dict()
 
 #Using Regular Expression
 def re_compile(word_list):
-	exp = r'\b%s' % r'\b|'.join(word_list)
-	exp += r'\b'
-	r = re.compile(exp, re.IGNORECASE)
+	r = re.compile(r'\b(?:%s)\b' % '|'.join(word_list), re.IGNORECASE)
 	return r
 
 def codify_doc(doc, re_obj):
+	doc = ''.join(c for c in unicodedata.normalize('NFD', doc) if unicodedata.category(c) != 'Mn')
+	doc = doc.encode('ascii', errors='ignore')
 	match = re_obj.search(doc)
 	if match:
 		return True
@@ -26,18 +26,20 @@ def codify_doc(doc, re_obj):
 
 #Using Parse Tree
 def pattern_compile(word_list):
-	exp = '|'.join(word_list)
+	exp = ' | '.join(word_list)
 	return exp
 
 def codify_doc_pattern(doc, exp):
 	doc = ''.join(c for c in unicodedata.normalize('NFD', doc) if unicodedata.category(c) != 'Mn')
 	doc = doc.encode('ascii', errors='ignore')
-	t = parsetree(doc, lemmata=True, tags=False, chunks=False)
+	t = parsetree(doc, lemmata=True)
 
 	# For greedy matching
 	# match = search(exp,t)
 	# For strict order matching
-	match = search(exp,t, STRICT) 
+	match  = search(exp,t,STRICT)
+
+	# match = search(exp,t, STRICT) 
 
 	if match != []:
 		return True
@@ -56,8 +58,8 @@ class WSHandler(websocket.WebSocketHandler):
     	exp = re_dict[client_id]
 
     	response = { 'client_id': client_id,
-					# 'profane_code': codify_doc(doc, re_obj)
-					'profane_code': codify_doc_pattern(doc, exp)
+					'profane_code': codify_doc(doc, exp)
+					# 'profane_code': codify_doc_pattern(doc, exp)
 					}
 
         self.write_message(json.dumps(response))
@@ -79,8 +81,8 @@ class CodifyProfane(tornado.web.RequestHandler):
 
 		if client_id in profane_dict:
 			response = { 'client_id': client_id,
-						#'profane_code': codify_doc(doc, exp)
-						'profane_code': codify_doc_pattern(doc, exp)
+						'profane_code': codify_doc(doc, exp)
+						# 'profane_code': codify_doc_pattern(doc, exp)
 						}
 		else:
 			response = "client not found"
@@ -132,7 +134,7 @@ class ProfaneListUpdate(tornado.web.RequestHandler):
 		client_id = self.get_argument('client_id', '')
 		u_type = self.get_argument('u_type', '')
 		term = self.get_argument('term', '')
-
+		term = term.strip()
 		if client_id in profane_dict:
 			if u_type == 'add':
 				if term not in profane_dict[client_id]['profane_list']:
@@ -152,12 +154,13 @@ class ProfaneListUpdate(tornado.web.RequestHandler):
 					self.write(r_str)
 
 			word_list = []
+
 			for key,value in profane_dict[client_id]['profane_list'].iteritems():
 				word_list.append(key)
 
 
 			re_obj = re_compile(word_list)
-			#re_obj = pattern_compile(word_list)
+			# re_obj = pattern_compile(word_list)
 			re_dict[client_id] = re_obj
 
 		else:

@@ -31,7 +31,7 @@ print "Total time taken: ", d.total_seconds() * 1000
 #Add term
 print "\n Add term : 'Ole'"
 s = datetime.datetime.now()
-post_data = { 'client_id': 'testdata', 'u_type': 'add', 'term':'Ole'} #A dictionary of your post data
+post_data = { 'client_id': 'testdata', 'u_type': 'add', 'term':'miss'} #A dictionary of your post data
 r = requests.post('http://127.0.0.1:8888/profanity/update/', post_data)
 print r.text
 e = datetime.datetime.now()
@@ -39,9 +39,9 @@ d = e - s
 print "Total time taken: ", d.total_seconds() * 1000
 
 #Doc profane test
-print "\n Test codification on : 'This is ole!!!'"
+print "\n Test codification on : 'This is ole miss!!!'"
 s = datetime.datetime.now()
-post_data = { 'client_id': 'testdata', 'doc' : "This is ole!!!"} #A dictionary of your post data
+post_data = { 'client_id': 'testdata', 'doc' : "This is ole miss!!!"} #A dictionary of your post data
 r = requests.post('http://127.0.0.1:8888/profanity/codify/', post_data)
 print r.text
 resp = json.loads(r.text)
