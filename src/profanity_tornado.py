@@ -96,7 +96,7 @@ class ProfaneList(tornado.web.RequestHandler):
 						}
 		else:
 			response = { 'client_id': client_id,
-						'swear_dict': ''
+						'swear_dict': 'Client id not present'
 						}
 		self.write(response)
 
@@ -126,9 +126,9 @@ class ProfaneListInit(tornado.web.RequestHandler):
 
 
 class ProfaneListUpdate(tornado.web.RequestHandler):
-	global profane_dict
-	global re_dict
 	def post(self):
+		global profane_dict
+		global re_dict
 		client_id = self.get_argument('client_id', '')
 		u_type = self.get_argument('u_type', '')
 		term = self.get_argument('term', '')
@@ -139,9 +139,19 @@ class ProfaneListUpdate(tornado.web.RequestHandler):
 			if u_type == 'add':
 				if term not in profane_dict[client_id]['profane_list']:
 					profane_dict[client_id]['profane_list'][term] = []
+					r_str = "Term %s added" % term
+					self.write(r_str)
+				else:
+					r_str = "Term %s exists" % term
+					self.write(r_str)
 			if u_type == 'remove':
 				if term in profane_dict[client_id]['profane_list']:
 					profane_dict[client_id]['profane_list'].pop(term, None)
+					r_str = "Term %s removed" % term
+					self.write(r_str)
+				else:
+					r_str = "Term %s not found" % term
+					self.write(r_str)
 
 			word_list = []
 			for key,value in profane_dict[client_id]['profane_list'].iteritems():
