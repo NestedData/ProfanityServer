@@ -1,4 +1,4 @@
-## Usage `src/Profanity`
+## Usage Profanity Library `src/Profanity`
 
 ```python
 from .profanity import Filter
@@ -38,7 +38,7 @@ Creates a new filter
 
 ```python
 data = {
-  "filter_id": "slug-style:string"
+  "filter_id": "slug-style-string"
 }
 ```
 
