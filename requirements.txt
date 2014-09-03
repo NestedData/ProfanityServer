@@ -1,8 +1,10 @@
 Pattern==2.6
+PyYAML==3.11
 backports.ssl-match-hostname==3.4.0.2
 certifi==14.05.14
 gevent==1.0.1
 greenlet==0.4.3
+nltk==2.0.4
 pymongo==2.7.2
 requests==2.4.0
 six==1.7.3
