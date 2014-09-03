@@ -13,7 +13,6 @@ LSUFilter = Filter("drizzle:lsu", create=False)
 
 
 # Filters have a small public api. Each method updates the blacklist in memory and persists the change to the database
-
 MSUFilter.set_blacklist(["a", "b"])
 
 # extends the existing blacklist with the new blacklist
@@ -21,6 +20,9 @@ MSUFilter.add_to_blacklist(["c", "d"])
 
 # removing terms that don't exist causes no problem
 MSUFilter.remove_from_blacklist(["a", "c", "e"])
+
+# remove the filter from the db entirely
+MSUFilter.destroy()
 ```
 
 
