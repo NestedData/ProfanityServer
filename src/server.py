@@ -89,8 +89,9 @@ class ClientFiltersHandler(tornado.web.RequestHandler):
 
   # update the filter
   def put(self, filter_id):
-    blacklist_changes = self.get_argument('black_list', json.dumps({}))
-    blacklist_changes = json.loads(blacklist_changes)
+    data = json.loads(self.request.body or {})
+    blacklist_changes = data['black_list']
+    print blacklist_changes
 
     filter = getOrMakeFilter(filter_id)
 
