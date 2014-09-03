@@ -4,16 +4,16 @@ import json
 import unicodedata
 import datetime
 from bson.objectid import ObjectId
-from .profanity import Filter
+from profanity import Filter
 
 ProfanityFilters = {}
 
 def getFilter(filter_id, create=True):
   # creates the filter if it doesn't exist
-  if filter_id not in ProfanityFilters
-    if create
+  if filter_id not in ProfanityFilters:
+    if create:
       ProfanityFilters[filter_id] = Filter(filter_id)
-    else
+    else:
       # if create is false and the filter doesn't exist, bail
       return None
   return ProfanityFilters[filter_id]
@@ -57,17 +57,16 @@ class ClientFiltersInitHandler(tornado.web.RequestHandler):
     # load the black_list from json
     black_list = json.loads(black_list)
 
-    if Profanity
     # creates the filter if it doesn't exist, returns None if it does
     filter = getFilter(filter_id, create=False)
 
-    if filter
+    if filter:
       filter.set_blacklist(black_list)
       response = {
         "filter_id": filter_id 
       }
       self.write(response)
-    else
+    else:
       response = {
         "error": "Filter already exists with this id."
       }
@@ -103,7 +102,7 @@ class ClientFiltersHandler(tornado.web.RequestHandler):
       filter.add_to_blacklist(blacklist_changes['add'])
       editted = True
 
-    if editted
+    if editted:
       filter.save()
 
     response = {
