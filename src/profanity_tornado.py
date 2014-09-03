@@ -53,7 +53,6 @@ class WSHandler(websocket.WebSocketHandler):
     	message = json.loads(message)
     	client_id = message['client_id']
     	doc = message['doc']
-    	print doc
     	exp = re_dict[client_id]
 
     	response = { 'client_id': client_id,
