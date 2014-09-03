@@ -93,30 +93,33 @@ class Filter(object):
 
   # returns boolean indicating success of update
   # false value indicates that the black_list was invalid
-  def set_blacklist(self, black_list):
+  def set_blacklist(self, black_list, store=True):
     valid = self._is_valid_blacklist(black_list)
     if valid:
       self.black_list = black_list
-      self._store_to_db()
+      if store
+        self._store_to_db()
     return valid
 
   # returns boolean indicating success of update
   # false value indicates that the black_list was invalid
-  def add_to_blacklist(self, add_terms):
+  def add_to_blacklist(self, add_terms, store=True):
     valid = self._is_valid_blacklist(add_terms)
     if valid:
       self.black_list.extend(add_terms)
-      self._store_to_db()
+      if store
+        self._store_to_db()
     return valid
 
   # returns boolean indicating success of update
   # false value indicates that the black_list was invalid
-  def remove_from_blacklist(self, remove_terms):
+  def remove_from_blacklist(self, remove_terms, store=True):
     valid = self._is_valid_blacklist(remove_terms)
     if valid:
       # remove the terms in remove_terms from black_list
       self.black_list = [term for term in self.black_list if term not in remove_terms]
-      self._store_to_db()
+      if store
+        self._store_to_db()
     return valid
 
   # method to remove the filter from the db
@@ -125,3 +128,6 @@ class Filter(object):
     ClientsCollection.remove({
       "client_id": self.client_id
     })
+
+  def save(self):
+    self._store_to_db()

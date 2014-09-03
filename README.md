@@ -12,17 +12,25 @@ MSUFilter = Filter("drizzle:mississippi-state-university")
 LSUFilter = Filter("drizzle:lsu", create=False)
 
 
-# Filters have a small public api. Each method updates the blacklist in memory and persists the change to the database
+# Filters have a small public api. Each method updates the blacklist
+# in memory and persists the change to the database
 MSUFilter.set_blacklist(["a", "b"])
 
 # extends the existing blacklist with the new blacklist
 MSUFilter.add_to_blacklist(["c", "d"])
 
 # removing terms that don't exist causes no problem
-MSUFilter.remove_from_blacklist(["a", "c", "e"])
+# store=False makes the change locally without persisting it to the db
+MSUFilter.remove_from_blacklist(["a", "c", "e"], store=False)
 
 # remove the filter from the db entirely
 MSUFilter.destroy()
+
+# get the blacklist from the filter as an array of terms
+MSUFilter.black_list
+
+# persist the filter to the db
+MSUFilter.save()
 ```
 
 
@@ -60,8 +68,6 @@ or
 }
 ```
 
-
-
 #### GET /filters/:filter_id
 
 Returns the filter info. Expects no request body
@@ -70,6 +76,7 @@ Returns the filter info. Expects no request body
 
 ```json
 {
+  "filter_id": "slug-style-string",
   "black_list": ["a", "b"]
 }
 ```
@@ -78,9 +85,9 @@ Returns the filter info. Expects no request body
 
 Update the filter.
 
-##### Response - JSON
+##### Request body
 
-The request requires the black_list key, but the sub keys are all optional.  If none of the sub keys are set then no change will be made to the filter.
+If the blacklist key isn't present or none of the sub keys are set then no change will be made to the filter.
 
 The `add` key will add terms to the existing black_list.
 
@@ -100,9 +107,26 @@ The `init` key will replace the black_list in place.
 }
 ```
 
+##### Response - JSON
+
+```json
+{
+  "filter_id": "slug-style-string",
+  "black_list": ["a", "b"]
+}
+```
+
 #### DELETE /filters/:filter_id
 
 Destroys the filter. Doesn't expect a request body.
+
+##### Response - JSON
+
+```json
+{
+  "filter_id": "slug-style-string"
+}
+```
 
 ### Codify Text
 

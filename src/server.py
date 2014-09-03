@@ -3,16 +3,20 @@ from tornado import autoreload, ioloop, web, options, escape, websocket
 import json
 import unicodedata
 import datetime
-
+from bson.objectid import ObjectId
 from .profanity import Filter
 
 ProfanityFilters = {}
 
-def getFilter(client_id):
+def getFilter(filter_id, create=True):
   # creates the filter if it doesn't exist
-  if client_id not in ProfanityFilters
-    ProfanityFilters[client_id] = Filter(client_id)
-  return ProfanityFilters[client_id]
+  if filter_id not in ProfanityFilters
+    if create
+      ProfanityFilters[filter_id] = Filter(filter_id)
+    else
+      # if create is false and the filter doesn't exist, bail
+      return None
+  return ProfanityFilters[filter_id]
 
 class WSHandler(websocket.WebSocketHandler):
     def open(self):
@@ -21,13 +25,13 @@ class WSHandler(websocket.WebSocketHandler):
       
     def on_message(self, message):
       message = json.loads(message)
-      client_id = message['client_id']
+      filter_id = message['filter_id']
       text = message['text']
 
-      filter = getFilter(client_id)
+      filter = getFilter(filter_id)
 
       response = { 
-        'client_id': client_id,
+        'filter_id': filter_id,
         'profane_code': filter.code_regex(text)
       }
 
@@ -42,16 +46,93 @@ class MainHandler(tornado.web.RequestHandler):
         self.write("Hello, world")
 
 
-class CodifyProfane(tornado.web.RequestHandler):
+class ClientFiltersInitHandler(tornado.web.RequestHandler):
   def post(self):
-    # require the vars. raise 400 if not present
-    client_id = self.get_argument('client_id')
-    text = self.get_argument('text')
+    # require filter_id and black_list or 400
+    # we get filter_id from the request body because it doesn't exist yet.
+    # this allows the client to specify it or it defaults to an ObjectId string.
+    filter_id = self.get_argument('filter_id', str(ObjectId()))
+    black_list = self.get_argument('black_list')
 
-    filter = getFilter(client_id)
+    # load the black_list from json
+    black_list = json.loads(black_list)
+
+    if Profanity
+    # creates the filter if it doesn't exist, returns None if it does
+    filter = getFilter(filter_id, create=False)
+
+    if filter
+      filter.set_blacklist(black_list)
+      response = {
+        "filter_id": filter_id 
+      }
+      self.write(response)
+    else
+      response = {
+        "error": "Filter already exists with this id."
+      }
+      self.write(response)
+
+
+class ClientFiltersHandler(tornado.web.RequestHandler):
+  # return the details of the filter
+  def get(self, filter_id):
+    filter = getFilter(filter_id)
+    response = { 
+      'filter_id': filter_id,
+      'black_list': filter.black_list
+    }
+    self.write(response)
+
+  # update the filter
+  def put(self, filter_id):
+    blacklist_changes = self.get_argument('black_list', json.dumps({}))
+    blacklist_changes = json.loads(blacklist_changes)
+
+    filter = getFilter(filter_id)
+
+    # prevent hitting the db 3 times here
+    editted = False
+    if 'init' in blacklist_changes:
+      filter.set_blacklist(blacklist_changes['init'], False)
+      editted = True
+    if 'remove' in blacklist_changes:
+      filter.remove_from_blacklist(blacklist_changes['remove'])
+      editted = True
+    if 'add' in blacklist_changes:
+      filter.add_to_blacklist(blacklist_changes['add'])
+      editted = True
+
+    if editted
+      filter.save()
 
     response = {
-      'client_id': client_id,
+      'filter_id': filter_id,
+      'black_list': filter.black_list
+    }
+
+    self.write(response)
+
+  # remove the filter
+  def delete(self, filter_id):
+    filter = getFilter(filter_id)
+    filter.destroy()
+
+    response = {
+      'filter_id': filter_id,
+    }
+
+    self.write(response)
+
+class CodifyHandler(tornado.web.RequestHandler):
+  def post(self, filter_id):
+    # require the text. raise 400 if not present
+    text = self.get_argument('text')
+
+    filter = getFilter(filter_id)
+
+    response = {
+      'filter_id': filter_id,
       'profane_code': filter.code_regex(text)
     }
 
@@ -59,77 +140,11 @@ class CodifyProfane(tornado.web.RequestHandler):
   get = post
 
 
-class ProfaneList(tornado.web.RequestHandler):
-  def get(self):
-    # require client_id or raise 400
-    client_id = self.get_argument('client_id')
-    filter = getFilter(client_id)
-    response = { 
-      'client_id': client_id,
-      'black_list': filter.black_list
-    }
-    self.write(response)
-
-
-class ProfaneListInit(tornado.web.RequestHandler):
-  def post(self):
-    # require client_id and black_list or 400
-    client_id = self.get_argument('client_id')
-    black_list = self.get_argument('black_list')
-
-    # load the black_list from json
-    black_list = json.loads(black_list)
-
-    filter = getFilter(client_id)
-    filter.set_blacklist(black_list)
-
-class ProfaneListUpdate(tornado.web.RequestHandler):
-  def post(self):
-    # require client_id or 400
-    client_id = self.get_argument('client_id')
-
-    update_type = self.get_argument('update_type', '')
-    term = self.get_argument('term', '')
-
-    if client_id in profane_dict:
-      if update_type == 'add':
-        if term not in profane_dict[client_id]['profane_list']:
-          profane_dict[client_id]['profane_list'][term] = []
-          r_str = "Term %s added" % term
-          self.write(r_str)
-        else:
-          r_str = "Term %s exists" % term
-          self.write(r_str)
-      if update_type == 'remove':
-        if term in profane_dict[client_id]['profane_list']:
-          profane_dict[client_id]['profane_list'].pop(term, None)
-          r_str = "Term %s removed" % term
-          self.write(r_str)
-        else:
-          r_str = "Term %s not found" % term
-          self.write(r_str)
-
-      word_list = []
-      for key,value in profane_dict[client_id]['profane_list'].iteritems():
-        word_list.append(key)
-
-
-      re_obj = re_compile(word_list)
-      #re_obj = pattern_compile(word_list)
-      re_dict[client_id] = re_obj
-
-    else:
-      self.write("Client does not exist")
-  get = post
-
-
-
 application = web.Application([
     (r"/", MainHandler),
-    (r"/profanity/", ProfaneList),
-    (r"/profanity/update/", ProfaneListUpdate),
-    (r"/profanity/initialize/", ProfaneListInit),
-    (r"/profanity/codify/", CodifyProfane),
+    (r"/filters", ClientFiltersInitHandler),
+    (r"/filters/(TODO:ID_REGEX)", ClientFiltersHandler),
+    (r"/filters/(TODO:ID_REGEX)/codify/", ClientFiltersCodifyHandler),
     (r'/ws', WSHandler),
 ])
 
