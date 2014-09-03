@@ -6,7 +6,9 @@ from pattern.search import search, STRICT, Pattern, Constraint, taxonomy
 from pattern.en import parsetree
 import unicodedata
 import datetime
+from nltk import stem
 
+porter = stem.porter.PorterStemmer()
 profane_dict = dict()
 re_dict = dict()
 
@@ -16,8 +18,14 @@ def re_compile(word_list):
 	return r
 
 def codify_doc(doc, re_obj):
+	#cleanup of doc
 	doc = ''.join(c for c in unicodedata.normalize('NFD', doc) if unicodedata.category(c) != 'Mn')
 	doc = doc.encode('ascii', errors='ignore')
+
+	#stemming
+	doc = " ".join([porter.stem(i) for i in doc.split()])
+
+	#search
 	match = re_obj.search(doc)
 	if match:
 		return True

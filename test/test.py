@@ -31,7 +31,7 @@ print "Total time taken: ", d.total_seconds() * 1000
 #Add term
 print "\n Add term : 'Ole'"
 s = datetime.datetime.now()
-post_data = { 'client_id': 'testdata', 'u_type': 'add', 'term':'miss'} #A dictionary of your post data
+post_data = { 'client_id': 'testdata', 'u_type': 'add', 'term':'Ole'} #A dictionary of your post data
 r = requests.post('http://127.0.0.1:8888/profanity/update/', post_data)
 print r.text
 e = datetime.datetime.now()
