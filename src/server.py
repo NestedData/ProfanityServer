@@ -88,11 +88,11 @@ class ProfaneListUpdate(tornado.web.RequestHandler):
     # require client_id or 400
     client_id = self.get_argument('client_id')
 
-    u_type = self.get_argument('u_type', '')
+    update_type = self.get_argument('update_type', '')
     term = self.get_argument('term', '')
 
     if client_id in profane_dict:
-      if u_type == 'add':
+      if update_type == 'add':
         if term not in profane_dict[client_id]['profane_list']:
           profane_dict[client_id]['profane_list'][term] = []
           r_str = "Term %s added" % term
@@ -100,7 +100,7 @@ class ProfaneListUpdate(tornado.web.RequestHandler):
         else:
           r_str = "Term %s exists" % term
           self.write(r_str)
-      if u_type == 'remove':
+      if update_type == 'remove':
         if term in profane_dict[client_id]['profane_list']:
           profane_dict[client_id]['profane_list'].pop(term, None)
           r_str = "Term %s removed" % term
