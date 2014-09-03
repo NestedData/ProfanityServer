@@ -44,6 +44,8 @@ data = {
 
 ##### Response - JSON
 
+Echos filter_id back on success or returns an error.
+
 ```json
 {
   "filter_id: "slug-style-string"
@@ -58,7 +60,6 @@ or
 }
 ```
 
-Echos filter_id back on success or returns an error.
 
 
 #### GET /filters/:filter_id
@@ -79,16 +80,6 @@ Update the filter.
 
 ##### Response - JSON
 
-```json
-{
-  "black_list": {
-    "init": ["a", "c"]
-    "remove": ["a"],
-    "add": ["z", "y", "x"],
-  }
-}
-```
-
 The request requires the black_list key, but the sub keys are all optional.  If none of the sub keys are set then no change will be made to the filter.
 
 The `add` key will add terms to the existing black_list.
@@ -98,6 +89,16 @@ The `remove` key will remove terms from the existing black_list.
 The `init` key will replace the black_list in place.
 
 `init` is processed first, followed `remove` and ending with `add`.
+
+```json
+{
+  "black_list": {
+    "init": ["a", "c"],
+    "remove": ["a"],
+    "add": ["z", "y", "x"],
+  }
+}
+```
 
 #### DELETE /filters/:filter_id
 
