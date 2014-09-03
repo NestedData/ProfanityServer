@@ -72,11 +72,12 @@ class CodifyProfane(tornado.web.RequestHandler):
 		doc = self.get_argument('doc', '')
 
 		s = datetime.datetime.now()
-		re_obj = re_dict[client_id]
+		exp = re_dict[client_id]
 
 		if client_id in profane_dict:
 			response = { 'client_id': client_id,
-						'profane_code': codify_doc(doc, re_obj)			
+						#'profane_code': codify_doc(doc, exp)
+						'profane_code': codify_doc_pattern(doc, exp)
 						}
 		else:
 			response = "client not found"
@@ -118,8 +119,10 @@ class ProfaneListInit(tornado.web.RequestHandler):
 			for key,value in profane_list.iteritems():
 				word_list.append(key)
 
-			re_obj = re_compile(word_list)
-			re_dict[client_id] = re_obj
+			# exp = re_compile(word_list)
+
+			exp = pattern_compile(word_list)
+			re_dict[client_id] = exp
 
 
 class ProfaneListUpdate(tornado.web.RequestHandler):
