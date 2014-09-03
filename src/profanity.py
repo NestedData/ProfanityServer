@@ -118,3 +118,10 @@ class Filter(object):
       self.black_list = [term for term in self.black_list if term not in remove_terms]
       self._store_to_db()
     return valid
+
+  # method to remove the filter from the db
+  def destroy(self):
+    ClientsCollection = self._get_collection('clients')
+    ClientsCollection.remove({
+      "client_id": self.client_id
+    })
