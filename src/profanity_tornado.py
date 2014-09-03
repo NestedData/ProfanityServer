@@ -10,6 +10,7 @@ import datetime
 profane_dict = dict()
 re_dict = dict()
 
+#Using Regular Expression
 def re_compile(word_list):
 	exp = r'\b%s' % r'\b|'.join(word_list)
 	exp += r'\b'
@@ -23,6 +24,7 @@ def codify_doc(doc, re_obj):
 	else:
 		return False
 
+#Using Parse Tree
 def pattern_compile(word_list):
 	exp = '|'.join(word_list)
 	return exp
@@ -45,18 +47,21 @@ def codify_doc_pattern(doc, exp):
 class WSHandler(websocket.WebSocketHandler):
     def open(self):
         print 'new connection'
-        self.write_message("Hello World")
+        self.write_message("Python Profanity Tester")
       
     def on_message(self, message):
+    	message = json.loads(message)
     	client_id = message['client_id']
     	doc = message['doc']
-    	re_obj = re_dict[client_id]
+    	print doc
+    	exp = re_dict[client_id]
 
     	response = { 'client_id': client_id,
-					'profane_code': codify_doc(doc, re_obj)			
+					# 'profane_code': codify_doc(doc, re_obj)
+					'profane_code': codify_doc_pattern(doc, exp)
 					}
 
-        self.write_message(response)
+        self.write_message(json.dumps(response))
  
     def on_close(self):
       print 'connection closed'
