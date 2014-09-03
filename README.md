@@ -46,7 +46,7 @@ data = {
 
 ```json
 {
-  "filter_id: "slug-style:string"
+  "filter_id: "slug-style-string"
 }
 ```
 
@@ -54,7 +54,7 @@ or
 
 ```json
 {
-  "error": "Failed to create filter for filter_id: 'slug-style:string'"
+  "error": "Failed to create filter for filter_id: 'slug-style-string'"
 }
 ```
 
