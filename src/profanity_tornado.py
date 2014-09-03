@@ -32,7 +32,7 @@ def pattern_compile(word_list):
 def codify_doc_pattern(doc, exp):
 	doc = ''.join(c for c in unicodedata.normalize('NFD', doc) if unicodedata.category(c) != 'Mn')
 	doc = doc.encode('ascii', errors='ignore')
-	t = parsetree(doc, lemmata=True)
+	t = parsetree(doc, lemmata=True, tags=False, chunks=False)
 
 	# For greedy matching
 	# match = search(exp,t)
@@ -119,9 +119,9 @@ class ProfaneListInit(tornado.web.RequestHandler):
 			for key,value in profane_list.iteritems():
 				word_list.append(key)
 
-			# exp = re_compile(word_list)
+			exp = re_compile(word_list)
 
-			exp = pattern_compile(word_list)
+			# exp = pattern_compile(word_list)
 			re_dict[client_id] = exp
 
 
@@ -132,8 +132,6 @@ class ProfaneListUpdate(tornado.web.RequestHandler):
 		client_id = self.get_argument('client_id', '')
 		u_type = self.get_argument('u_type', '')
 		term = self.get_argument('term', '')
-
-		self.write(u_type)
 
 		if client_id in profane_dict:
 			if u_type == 'add':
@@ -157,7 +155,9 @@ class ProfaneListUpdate(tornado.web.RequestHandler):
 			for key,value in profane_dict[client_id]['profane_list'].iteritems():
 				word_list.append(key)
 
+
 			re_obj = re_compile(word_list)
+			#re_obj = pattern_compile(word_list)
 			re_dict[client_id] = re_obj
 
 		else:
