@@ -16,10 +16,11 @@ class WSHandler(websocket.WebSocketHandler):
       doc = message['doc']
       exp = re_dict[client_id]
 
-      response = { 'client_id': client_id,
-          # 'profane_code': codify_doc(doc, re_obj)
-          'profane_code': codify_doc_pattern(doc, exp)
-          }
+      response = { 
+        'client_id': client_id,
+        # 'profane_code': codify_doc(doc, re_obj)
+        'profane_code': codify_doc_pattern(doc, exp)
+      }
 
         self.write_message(json.dumps(response))
  

@@ -3,11 +3,10 @@ import os
 
 from pymongo import MongoClient
 
-
 class Filter(object):
   MONGO_URL = os.environ['MONGO_URL'] or "mongodb://localhost:27017/profanity"
 
-  def __init__(self, client_id, create=False):
+  def __init__(self, client_id, create=True):
     # declare instance variables
     self.client_id = client_id
 
@@ -15,8 +14,14 @@ class Filter(object):
     self._create_db_connection()
 
     # create the necessary record to get started
-    if create:
-      self._create_filter()
+    # if one doesn't exist for the client_id
+    client_doc = self._get_client_from_db()
+    if not client_doc:
+      if create
+        self._create_filter()
+      else
+        raise Exception("No filter exists for client_id: %s", self.client_id)
+
 
     self._update_from_db()
 
