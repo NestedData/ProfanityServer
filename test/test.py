@@ -54,7 +54,14 @@ print "Total time taken: ", d.total_seconds() * 1000
 #Remove term
 print "\n Remove term : 'Ole'"
 s = datetime.datetime.now()
-post_data = { 'client_id': 'testdata', 'update_type': 'remove', 'term':'Ole'} #A dictionary of your post data
+post_data = { 
+  'client_id': 'testdata',
+  'black_list': {
+    "remove": [], # remove these terms from the blacklist
+    "add": [], # add these terms to the black_list
+    "init": [] # set the initial list to this
+  }
+}
 r = requests.post('http://127.0.0.1:8888/profanity/update/', post_data)
 print r.text
 e = datetime.datetime.now()
