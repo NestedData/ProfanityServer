@@ -78,8 +78,9 @@ print "\n Websocket test"
 ws = create_connection("ws://localhost:8888/ws")
 resp =  ws.recv()
 print "Received '%s'" % resp
-test_doc = { 'client_id': 'testdata', 'doc' : "This is ole"} 
 
+test_doc = { 'client_id': 'testdata', 'doc' : "This is ole"} 
+print "\n Test codification on : 'This is ole'"
 s = datetime.datetime.now()
 ws.send(json.dumps(test_doc))
 resp =  ws.recv()
@@ -90,6 +91,7 @@ print "Total time taken: ", d.total_seconds() * 1000
 
 s = datetime.datetime.now()
 test_doc = { 'client_id': 'testdata', 'doc' : "This is shit!"}
+print "\n Test codification on : 'This is shit!'"
 ws.send(json.dumps(test_doc))
 resp =  ws.recv()
 print "Received '%s'" % resp

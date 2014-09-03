@@ -76,7 +76,6 @@ class CodifyProfane(tornado.web.RequestHandler):
 		client_id = self.get_argument('client_id', '')
 		doc = self.get_argument('doc', '')
 
-		s = datetime.datetime.now()
 		exp = re_dict[client_id]
 
 		if client_id in profane_dict:
@@ -86,9 +85,6 @@ class CodifyProfane(tornado.web.RequestHandler):
 						}
 		else:
 			response = "client not found"
-		e = datetime.datetime.now()
-		d = e - s
-		print d.total_seconds() * 1000
 		self.write(response)
 	get = post
 
