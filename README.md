@@ -95,7 +95,7 @@ The `init` key will replace the black_list in place.
   "black_list": {
     "init": ["a", "c"],
     "remove": ["a"],
-    "add": ["z", "y", "x"],
+    "add": ["z", "y", "x"]
   }
 }
 ```
