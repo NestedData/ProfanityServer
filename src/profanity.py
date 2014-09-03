@@ -3,10 +3,10 @@ import os
 
 from pymongo import MongoClient
 
+# TODO: WHY IS IT CONNECTING TO THE WRONG DATABASE?!?!?!?!?!?
 class Filter(object):
-  MONGO_URL = os.environ['MONGO_URL'] or "mongodb://localhost:27017/profanity"
-
-  def __init__(self, client_id, create=True):
+  MONGO_URL = os.environ['MONGO_URL'] if ('MONGO_URL' in os.environ) else "mongodb://localhost:27017/profanity"
+  def __init__(self, client_id, black_list=[], create=True):
     # declare instance variables
     self.client_id = client_id
 
@@ -17,18 +17,19 @@ class Filter(object):
     # if one doesn't exist for the client_id
     client_doc = self._get_client_from_db()
     if not client_doc:
-      if create
+      if create:
         self._create_filter()
-      else
+      else:
         raise Exception("No filter exists for client_id: %s", self.client_id)
 
+    self.set_blacklist(black_list)
 
     self._update_from_db()
 
   def _get_collection(self, collection_name="clients"):
-    return self.MongoClient.db[collection_name]
+    return self.mongoclient.db[collection_name]
 
-  def _create_db_connection(self, client_id):
+  def _create_db_connection(self):
     self.mongoclient = MongoClient(self.MONGO_URL)
 
   def _create_filter(self):
@@ -46,16 +47,16 @@ class Filter(object):
   def _update_from_db(self):
     # grab the necessary state from the db
     client_doc = self._get_client_from_db()
-    
+    print client_doc
     if client_doc is None:
       # if there isn't a client, bail
       raise Exception("Client doesn't exist for client_id: %s" % self.client_id)
 
     # if there is a client, set the values from the doc
-    if not self._is_valid_blacklist(client_doc.black_list):
+    if not self._is_valid_blacklist(client_doc['black_list']):
       raise Exception("Blacklist was invalid")
 
-    self.black_list = client_doc.black_list
+    self.black_list = client_doc['black_list']
 
     # update calculated state once the data is loaded
     self._compile_blacklist_regex()
@@ -78,9 +79,9 @@ class Filter(object):
 
   def _compile_blacklist_regex(self):
     # Q: do we want to return it or assign it or both
-  	exp = r'\b%s' % r'\b|'.join(self.black_list)
-  	exp += r'\b'
-  	r = re.compile(exp, re.IGNORECASE)
+    exp = r'\b%s' % r'\b|'.join(self.black_list)
+    exp += r'\b'
+    r = re.compile(exp, re.IGNORECASE)
     self.regex = r
 
   # check if text is profane using regex
@@ -97,7 +98,7 @@ class Filter(object):
     valid = self._is_valid_blacklist(black_list)
     if valid:
       self.black_list = black_list
-      if store
+      if store:
         self._store_to_db()
     return valid
 
@@ -107,7 +108,7 @@ class Filter(object):
     valid = self._is_valid_blacklist(add_terms)
     if valid:
       self.black_list.extend(add_terms)
-      if store
+      if store:
         self._store_to_db()
     return valid
 
@@ -118,7 +119,7 @@ class Filter(object):
     if valid:
       # remove the terms in remove_terms from black_list
       self.black_list = [term for term in self.black_list if term not in remove_terms]
-      if store
+      if store:
         self._store_to_db()
     return valid
 

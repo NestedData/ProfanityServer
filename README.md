@@ -46,7 +46,8 @@ Creates a new filter
 
 ```python
 data = {
-  "filter_id": "slug-style-string"
+  "filter_id": "slug-style-string",
+  "black_list": ["a", "b"]
 }
 ```
 

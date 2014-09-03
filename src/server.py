@@ -8,14 +8,17 @@ from profanity import Filter
 
 ProfanityFilters = {}
 
-def getFilter(filter_id, create=True):
+def getFilter(filter_id):
+  filter = None
+  if filter_id in ProfanityFilters:
+    filter = ProfanityFilters[filter_id]
+  return filter
+
+def getOrMakeFilter(filter_id):
   # creates the filter if it doesn't exist
-  if filter_id not in ProfanityFilters:
-    if create:
-      ProfanityFilters[filter_id] = Filter(filter_id)
-    else:
-      # if create is false and the filter doesn't exist, bail
-      return None
+  filter = getFilter(filter_id)
+  if filter is None:
+    ProfanityFilters[filter_id] = Filter(filter_id)
   return ProfanityFilters[filter_id]
 
 class WSHandler(websocket.WebSocketHandler):
@@ -28,7 +31,7 @@ class WSHandler(websocket.WebSocketHandler):
       filter_id = message['filter_id']
       text = message['text']
 
-      filter = getFilter(filter_id)
+      filter = getOrMakeFilter(filter_id)
 
       response = { 
         'filter_id': filter_id,
@@ -57,18 +60,19 @@ class ClientFiltersInitHandler(tornado.web.RequestHandler):
     # load the black_list from json
     black_list = json.loads(black_list)
 
-    # creates the filter if it doesn't exist, returns None if it does
-    filter = getFilter(filter_id, create=False)
-
+    # return the filter if it exists
+    filter = getFilter(filter_id)
+    # if the filter doesn't exist, 
     if filter:
-      filter.set_blacklist(black_list)
       response = {
-        "filter_id": filter_id 
+        "error": "Filter already exists with this id. Use the update method instead."
       }
       self.write(response)
     else:
+      filter = getOrMakeFilter(filter_id)
+      filter.set_blacklist(black_list)
       response = {
-        "error": "Filter already exists with this id."
+        "filter_id": filter_id 
       }
       self.write(response)
 
@@ -76,7 +80,7 @@ class ClientFiltersInitHandler(tornado.web.RequestHandler):
 class ClientFiltersHandler(tornado.web.RequestHandler):
   # return the details of the filter
   def get(self, filter_id):
-    filter = getFilter(filter_id)
+    filter = getOrMakeFilter(filter_id)
     response = { 
       'filter_id': filter_id,
       'black_list': filter.black_list
@@ -88,21 +92,21 @@ class ClientFiltersHandler(tornado.web.RequestHandler):
     blacklist_changes = self.get_argument('black_list', json.dumps({}))
     blacklist_changes = json.loads(blacklist_changes)
 
-    filter = getFilter(filter_id)
+    filter = getOrMakeFilter(filter_id)
 
     # prevent hitting the db 3 times here
-    editted = False
+    edited = False
     if 'init' in blacklist_changes:
       filter.set_blacklist(blacklist_changes['init'], False)
-      editted = True
+      edited = True
     if 'remove' in blacklist_changes:
       filter.remove_from_blacklist(blacklist_changes['remove'])
-      editted = True
+      edited = True
     if 'add' in blacklist_changes:
       filter.add_to_blacklist(blacklist_changes['add'])
-      editted = True
+      edited = True
 
-    if editted:
+    if edited:
       filter.save()
 
     response = {
@@ -114,7 +118,7 @@ class ClientFiltersHandler(tornado.web.RequestHandler):
 
   # remove the filter
   def delete(self, filter_id):
-    filter = getFilter(filter_id)
+    filter = getOrMakeFilter(filter_id)
     filter.destroy()
 
     response = {
@@ -123,12 +127,12 @@ class ClientFiltersHandler(tornado.web.RequestHandler):
 
     self.write(response)
 
-class CodifyHandler(tornado.web.RequestHandler):
+class ClientFiltersCodifyHandler(tornado.web.RequestHandler):
   def post(self, filter_id):
     # require the text. raise 400 if not present
     text = self.get_argument('text')
 
-    filter = getFilter(filter_id)
+    filter = getOrMakeFilter(filter_id)
 
     response = {
       'filter_id': filter_id,
@@ -139,11 +143,12 @@ class CodifyHandler(tornado.web.RequestHandler):
   get = post
 
 
+# regex [0-9A-Za-z-:_]+ matches strings1_like2-this3:one4
 application = web.Application([
     (r"/", MainHandler),
     (r"/filters", ClientFiltersInitHandler),
-    (r"/filters/(TODO:ID_REGEX)", ClientFiltersHandler),
-    (r"/filters/(TODO:ID_REGEX)/codify/", ClientFiltersCodifyHandler),
+    (r"/filters/([0-9A-Za-z-:_]+)", ClientFiltersHandler),
+    (r"/filters/([0-9A-Za-z-:_]+)/codify/", ClientFiltersCodifyHandler),
     (r'/ws', WSHandler),
 ])
 
