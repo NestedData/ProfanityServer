@@ -1,7 +1,11 @@
 import re
 import os
+import unicodedata
+from nltk import stem
 
 from pymongo import MongoClient
+
+porter = stem.porter.PorterStemmer()
 
 # TODO: WHY IS IT CONNECTING TO THE WRONG DATABASE?!?!?!?!?!?
 class Filter(object):
@@ -79,16 +83,23 @@ class Filter(object):
 
   def _compile_blacklist_regex(self):
     # Q: do we want to return it or assign it or both
-    exp = r'\b%s' % r'\b|'.join(self.black_list)
-    exp += r'\b'
-    r = re.compile(exp, re.IGNORECASE)
+    r = re.compile(r'\b(?:%s)\b' % '|'.join(self.black_list), re.IGNORECASE)
+    # exp = r'\b%s' % r'\b|'.join(self.black_list)
+    # exp += r'\b'
+    # r = re.compile(exp, re.IGNORECASE)
     self.regex = r
 
   # check if text is profane using regex
   def code_regex(self, text):
+    #cleanup of doc
+    text = ''.join(c for c in unicodedata.normalize('NFD', text) if unicodedata.category(c) != 'Mn')
+    text = text.encode('ascii', errors='ignore')
+    #stemming
+    text = " ".join([porter.stem(i) for i in text.split()])
+
     match = self.regex.search(text)
-    # match = re.search(self.regex, text)
     print text, self.regex, match
+    
     if match:
       return True
     else:
@@ -112,6 +123,7 @@ class Filter(object):
     valid = self._is_valid_blacklist(add_terms)
     if valid:
       self.black_list.extend(add_terms)
+      self._compile_blacklist_regex()
       if store:
         self._store_to_db()
     return valid
@@ -123,6 +135,7 @@ class Filter(object):
     if valid:
       # remove the terms in remove_terms from black_list
       self.black_list = [term for term in self.black_list if term not in remove_terms]
+      self._compile_blacklist_regex()
       if store:
         self._store_to_db()
     return valid

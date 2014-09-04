@@ -19,6 +19,7 @@ def getOrMakeFilter(filter_id):
   filter = getFilter(filter_id)
   if filter is None:
     ProfanityFilters[filter_id] = Filter(filter_id)
+  print ProfanityFilters[filter_id]
   return ProfanityFilters[filter_id]
 
 class WSHandler(websocket.WebSocketHandler):

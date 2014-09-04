@@ -33,7 +33,7 @@ print "Total time taken: ", d.total_seconds() * 1000
 
 
 #Add term
-print "\n Add term : 'Ole'"
+print "\n Add term : 'apple, ole'"
 s = datetime.datetime.now()
 post_data = { 
   'filter_id': FILTER_ID,
