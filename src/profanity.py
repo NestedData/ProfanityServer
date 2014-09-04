@@ -98,7 +98,6 @@ class Filter(object):
     text = " ".join([porter.stem(i) for i in text.split()])
 
     match = self.regex.search(text)
-    print text, self.regex, match
     
     if match:
       return True
