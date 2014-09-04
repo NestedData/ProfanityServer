@@ -27,7 +27,7 @@ class Filter(object):
     self._update_from_db()
 
   def _get_collection(self, collection_name="filters"):
-    return self.mongoclient.db[collection_name]
+    return self.mongoclient.get_default_database()[collection_name]
 
   def _create_db_connection(self):
     self.mongoclient = MongoClient(self.MONGO_URL)
